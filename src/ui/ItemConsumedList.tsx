@@ -62,6 +62,9 @@ export function ItemConsumedList({ consumedItems, onEdit, onDelete }: ItemConsum
               Weight (kg)
             </th>
             <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontSize: "14px", fontWeight: "600" }}>
+              Price per Unit
+            </th>
+            <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontSize: "14px", fontWeight: "600" }}>
               Date
             </th>
             <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontSize: "14px", fontWeight: "600" }}>
@@ -86,6 +89,9 @@ export function ItemConsumedList({ consumedItems, onEdit, onDelete }: ItemConsum
               </td>
               <td style={{ padding: "12px", color: "#666" }}>
                 {item.weight ? `${item.weight} kg` : "-"}
+              </td>
+              <td style={{ padding: "12px", color: "#666" }}>
+                {item.price ? `$${item.price.toFixed(2)}` : "-"}
               </td>
               <td style={{ padding: "12px", color: "#666" }}>
                 {formatDate(item.consumptionDate)}

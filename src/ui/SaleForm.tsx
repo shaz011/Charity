@@ -13,6 +13,12 @@ interface SaleFormProps {
 
 const schema = z.object({
   productId: z.string().min(1, { message: "Select a product" }),
+  weightBeforeSale: z
+    .number({ error: "Weight before sale must be a number" })
+    .min(0.01, "Weight before sale must be > 0"),
+  weightAfterSale: z
+    .number({ error: "Weight after sale must be a number" })
+    .min(0, "Weight after sale must be >= 0"),
   weight: z
     .number({ error: "Weight must be a number" })
     .min(0.01, "Weight must be > 0"),
@@ -51,8 +57,10 @@ export function SaleForm({ products, sale, onCancel, onSubmit }: SaleFormProps):
     resolver: zodResolver(schema),
     defaultValues: sale
       ? { ...sale }
-      : {
+              : {
           productId: "",
+          weightBeforeSale: 0,
+          weightAfterSale: 0,
           weight: 0,
           pricePerKg: 0,
           expectedCash: 0,
@@ -70,6 +78,8 @@ export function SaleForm({ products, sale, onCancel, onSubmit }: SaleFormProps):
     } else {
       reset({
         productId: "",
+        weightBeforeSale: 0,
+        weightAfterSale: 0,
         weight: 0,
         pricePerKg: 0,
         expectedCash: 0,
@@ -97,6 +107,8 @@ export function SaleForm({ products, sale, onCancel, onSubmit }: SaleFormProps):
     }
   }, [selectedProductId, products, setValue]);
 
+  const weightBeforeSale = watch("weightBeforeSale") || 0;
+  const weightAfterSale = watch("weightAfterSale") || 0;
   const weight = watch("weight") || 0;
   const pricePerKg = watch("pricePerKg") || 0;
   const expectedCash = watch("expectedCash") || 0;
@@ -104,6 +116,14 @@ export function SaleForm({ products, sale, onCancel, onSubmit }: SaleFormProps):
   const topup = watch("topup") || 0;
   const charity = watch("charity") || 0;
   const credit = watch("credit") || 0;
+
+  // Auto-update actual weight sold when weight before and after sale change
+  useEffect(() => {
+    const actualWeightSold = weightBeforeSale - weightAfterSale;
+    if (actualWeightSold >= 0) {
+      setValue("weight", actualWeightSold);
+    }
+  }, [weightBeforeSale, weightAfterSale, setValue]);
 
   // Auto-update expected cash when weight or price per kg changes
   useEffect(() => {
@@ -138,14 +158,65 @@ export function SaleForm({ products, sale, onCancel, onSubmit }: SaleFormProps):
         {errors.saleDate && <span style={{ color: "crimson" }}>{errors.saleDate.message as string}</span>}
       </label>
 
+      <div style={{ background: "#f0f8ff", padding: 12, borderRadius: 4, border: "1px solid #b3d9ff" }}>
+        <h4 style={{ margin: "0 0 8px 0", color: "#0066cc" }}>Weight Tracking</h4>
+        <p style={{ margin: "0 0 12px 0", fontSize: "0.9em", color: "#666" }}>
+          Record the weight of the item + container before and after sale (e.g., rice + pot)
+        </p>
+        
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>Weight Before Sale (kg)</span>
+            <input
+              type="number"
+              step={0.01}
+              min={0.01}
+              placeholder="e.g., 5.5 (rice + pot)"
+              {...register("weightBeforeSale", { valueAsNumber: true })}
+            />
+            {errors.weightBeforeSale && <span style={{ color: "crimson" }}>{errors.weightBeforeSale.message}</span>}
+          </label>
+
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>Weight After Sale (kg)</span>
+            <input
+              type="number"
+              step={0.01}
+              min={0}
+              placeholder="e.g., 2.3 (remaining rice + pot)"
+              {...register("weightAfterSale", { valueAsNumber: true })}
+            />
+            {errors.weightAfterSale && <span style={{ color: "crimson" }}>{errors.weightAfterSale.message}</span>}
+          </label>
+        </div>
+
+        <div style={{ 
+          background: "#e8f5e8", 
+          padding: 8, 
+          borderRadius: 4, 
+          marginTop: 8,
+          border: "1px solid #c8e6c9"
+        }}>
+          <strong>Actual Weight Sold:</strong> {weight.toFixed(2)} kg
+          <small style={{ display: "block", color: "#666", marginTop: 4 }}>
+            Automatically calculated: {weightBeforeSale.toFixed(2)} kg - {weightAfterSale.toFixed(2)} kg
+          </small>
+        </div>
+      </div>
+
       <label style={{ display: "grid", gap: 4 }}>
-        <span>Weight (kg)</span>
+        <span>Weight (kg) - Auto-calculated</span>
         <input
           type="number"
           step={0.01}
           min={0.01}
           {...register("weight", { valueAsNumber: true })}
+          readOnly
+          style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
         />
+        <small style={{ color: "#666", fontSize: "0.8em" }}>
+          This field is automatically calculated from weight before and after sale
+        </small>
         {errors.weight && <span style={{ color: "crimson" }}>{errors.weight.message}</span>}
       </label>
 

@@ -17,6 +17,8 @@ const mapDatabaseProduct = (dbProduct: DatabaseProduct): Product => ({
 const mapDatabaseSale = (dbSale: DatabaseSale): Sale => ({
   id: dbSale.id,
   productId: dbSale.product_id,
+  weightBeforeSale: dbSale.weight_before_sale,
+  weightAfterSale: dbSale.weight_after_sale,
   weight: dbSale.weight,
   pricePerKg: dbSale.price_per_kg,
   expectedCash: dbSale.expected_cash,
@@ -41,6 +43,8 @@ const mapToDatabaseProduct = (product: ProductInput): Omit<DatabaseProduct, 'id'
 
 const mapToDatabaseSale = (sale: SaleInput): Omit<DatabaseSale, 'id' | 'created_at' | 'updated_at'> => ({
   product_id: sale.productId,
+  weight_before_sale: sale.weightBeforeSale,
+  weight_after_sale: sale.weightAfterSale,
   weight: sale.weight,
   price_per_kg: sale.pricePerKg,
   expected_cash: sale.expectedCash,
@@ -105,6 +109,7 @@ const mapDatabaseConsumedItem = (dbConsumedItem: DatabaseConsumedItem): ItemCons
   unit: dbConsumedItem.unit as any, // Type assertion for the enum
   quantity: dbConsumedItem.quantity,
   weight: dbConsumedItem.weight || undefined,
+  price: dbConsumedItem.price || undefined,
   consumptionDate: dbConsumedItem.consumption_date,
   notes: dbConsumedItem.notes || undefined,
   sourceType: dbConsumedItem.source_type,
@@ -119,6 +124,7 @@ const mapToDatabaseConsumedItem = (consumedItem: ItemConsumedInput): Omit<Databa
   unit: consumedItem.unit,
   quantity: consumedItem.quantity,
   weight: consumedItem.weight || null,
+  price: consumedItem.price || null,
   consumption_date: consumedItem.consumptionDate,
   notes: consumedItem.notes || null,
   source_type: consumedItem.sourceType,

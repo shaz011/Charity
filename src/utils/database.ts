@@ -32,7 +32,9 @@ export interface DatabaseProduct {
 export interface DatabaseSale {
   id: string;
   product_id: string;
-  weight: number;
+  weight_before_sale: number; // Weight of item + container before sale
+  weight_after_sale: number; // Weight of item + container after sale
+  weight: number; // Actual weight sold (weight_before_sale - weight_after_sale)
   price_per_kg: number;
   expected_cash: number;
   received_cash: number;
@@ -91,6 +93,7 @@ export interface DatabaseConsumedItem {
   unit: string;
   quantity: number;
   weight: number | null;
+  price: number | null;
   consumption_date: string;
   notes: string | null;
   source_type: "general_expense" | "custom_item";

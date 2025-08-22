@@ -14,7 +14,9 @@ export interface Product extends ProductInput {
 
 export interface SaleInput {
   productId: string;
-  weight: number;
+  weightBeforeSale: number; // Weight of item + container before sale (e.g., rice + pot)
+  weightAfterSale: number; // Weight of item + container after sale
+  weight: number; // Actual weight sold (weightBeforeSale - weightAfterSale)
   pricePerKg: number;
   expectedCash: number;
   receivedCash: number;
@@ -98,6 +100,7 @@ export interface ItemConsumedInput {
   unit: "kg" | "pack" | "piece" | "liter" | "dozen" | "gram" | "bottle" | "packet";
   quantity: number; // Quantity consumed
   weight?: number; // Optional weight in kg if applicable
+  price?: number; // Price per unit from the source item
   consumptionDate: string; // YYYY-MM-DD
   notes?: string; // Optional notes about consumption
   sourceType: "general_expense" | "custom_item"; // Where the item came from

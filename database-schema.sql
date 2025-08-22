@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS sales (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    weight DECIMAL(10,2) NOT NULL CHECK (weight > 0),
+    weight_before_sale DECIMAL(10,2) NOT NULL CHECK (weight_before_sale > 0), -- Weight of item + container before sale
+    weight_after_sale DECIMAL(10,2) NOT NULL CHECK (weight_after_sale >= 0), -- Weight of item + container after sale
+    weight DECIMAL(10,2) NOT NULL CHECK (weight > 0), -- Actual weight sold (weight_before_sale - weight_after_sale)
     price_per_kg DECIMAL(10,2) NOT NULL CHECK (price_per_kg >= 0),
     expected_cash DECIMAL(10,2) NOT NULL CHECK (expected_cash >= 0),
     received_cash DECIMAL(10,2) NOT NULL CHECK (received_cash >= 0),
@@ -97,6 +99,28 @@ CREATE INDEX IF NOT EXISTS idx_custom_items_created_at ON custom_items(created_a
 CREATE INDEX IF NOT EXISTS idx_misc_expenses_name ON misc_expenses(name);
 CREATE INDEX IF NOT EXISTS idx_misc_expenses_expense_date ON misc_expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_misc_expenses_created_at ON misc_expenses(created_at);
+
+-- Item Consumption table - for tracking what items are consumed daily
+CREATE TABLE IF NOT EXISTS consumed_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_name VARCHAR(100) NOT NULL, -- Name of the item consumed
+    unit VARCHAR(20) NOT NULL CHECK (unit IN ('kg', 'pack', 'piece', 'liter', 'dozen', 'gram', 'bottle', 'packet')),
+    quantity DECIMAL(10,2) NOT NULL CHECK (quantity > 0), -- Quantity consumed
+    weight DECIMAL(10,2) CHECK (weight >= 0), -- Optional weight in kg if applicable
+    price DECIMAL(10,2) CHECK (price >= 0), -- Price per unit from the source item
+    consumption_date DATE NOT NULL, -- Date when item was consumed
+    notes TEXT, -- Optional notes about consumption
+    source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('general_expense', 'custom_item')), -- Where the item came from
+    source_id UUID, -- ID of the source expense or custom item
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for consumed_items table
+CREATE INDEX IF NOT EXISTS idx_consumed_items_item_name ON consumed_items(item_name);
+CREATE INDEX IF NOT EXISTS idx_consumed_items_consumption_date ON consumed_items(consumption_date);
+CREATE INDEX IF NOT EXISTS idx_consumed_items_source_type ON consumed_items(source_type);
+CREATE INDEX IF NOT EXISTS idx_consumed_items_created_at ON consumed_items(created_at);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

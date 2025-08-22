@@ -72,13 +72,28 @@ Update `src/utils/database.ts` to use your local PostgreSQL connection instead o
 ### Sales Table
 - `id`: Unique identifier (UUID)
 - `product_id`: Reference to products table
-- `weight`: Weight sold in kg
+- `weight_before_sale`: Weight of item + container before sale (e.g., rice + pot)
+- `weight_after_sale`: Weight of item + container after sale
+- `weight`: Actual weight sold (weight_before_sale - weight_after_sale)
 - `price_per_kg`: Price per kg
 - `expected_cash`: Expected payment amount
 - `received_cash`: Actual payment received
 - `sale_date`: Date of sale
 - `topup`: Additional payment/adjustment
 - `arrears`: Calculated field (expected - received - topup)
+- `created_at`, `updated_at`: Timestamps
+
+### Consumed Items Table
+- `id`: Unique identifier (UUID)
+- `item_name`: Name of the item consumed
+- `unit`: Unit of measurement (kg, pack, piece, liter, dozen, gram, bottle, packet)
+- `quantity`: Quantity consumed
+- `weight`: Optional weight in kg if applicable
+- `price`: Price per unit from the source item
+- `consumption_date`: Date when item was consumed
+- `notes`: Optional notes about consumption
+- `source_type`: Where the item came from (general_expense, custom_item)
+- `source_id`: Reference to the source expense or custom item
 - `created_at`, `updated_at`: Timestamps
 
 ## Features

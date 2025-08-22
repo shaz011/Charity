@@ -22,7 +22,9 @@ export function SaleList({ sales, products, onEdit, onDelete }: SaleListProps): 
             <th style={{ textAlign: "left", padding: 8 }}>Product</th>
             <th style={{ textAlign: "left", padding: 8 }}>Sale Date</th>
             <th style={{ textAlign: "right", padding: 8 }}>Charity Amount</th>
-            <th style={{ textAlign: "right", padding: 8 }}>Weight (kg)</th>
+            <th style={{ textAlign: "right", padding: 8 }}>Weight Before (kg)</th>
+            <th style={{ textAlign: "right", padding: 8 }}>Weight After (kg)</th>
+            <th style={{ textAlign: "right", padding: 8 }}>Weight Sold (kg)</th>
             <th style={{ textAlign: "right", padding: 8 }}>Price/kg</th>
             <th style={{ textAlign: "right", padding: 8 }}>Expected</th>
             <th style={{ textAlign: "right", padding: 8 }}>Received</th>
@@ -35,9 +37,9 @@ export function SaleList({ sales, products, onEdit, onDelete }: SaleListProps): 
         <tbody>
           {sales.length === 0 ? (
             <tr>
-              <td colSpan={11} style={{ padding: 12, textAlign: "center", color: "#666" }}>
-                No sales recorded yet
-              </td>
+                          <td colSpan={14} style={{ padding: 12, textAlign: "center", color: "#666" }}>
+              No sales recorded yet
+            </td>
             </tr>
           ) : (
             sales.map((sale) => (
@@ -47,7 +49,9 @@ export function SaleList({ sales, products, onEdit, onDelete }: SaleListProps): 
                 <td style={{ padding: 8, textAlign: "right", color: (sale.charity || 0) > 0 ? "#2c5aa0" : "#666" }}>
                   ${(sale.charity || 0).toFixed(2)}
                 </td>
-                <td style={{ padding: 8, textAlign: "right" }}>{(sale.weight || 0).toFixed(2)}</td>
+                <td style={{ padding: 8, textAlign: "right", color: "#0066cc" }}>{(sale.weightBeforeSale || 0).toFixed(2)}</td>
+                <td style={{ padding: 8, textAlign: "right", color: "#666" }}>{(sale.weightAfterSale || 0).toFixed(2)}</td>
+                <td style={{ padding: 8, textAlign: "right", fontWeight: "bold" }}>{(sale.weight || 0).toFixed(2)}</td>
                 <td style={{ padding: 8, textAlign: "right" }}>${(sale.pricePerKg || 0).toFixed(2)}</td>
                 <td style={{ padding: 8, textAlign: "right" }}>${(sale.expectedCash || 0).toFixed(2)}</td>
                 <td style={{ padding: 8, textAlign: "right" }}>${(sale.receivedCash || 0).toFixed(2)}</td>

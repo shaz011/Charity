@@ -17,6 +17,7 @@ const schema = z.object({
   unit: z.enum(["kg", "pack", "piece", "liter", "dozen", "gram", "bottle", "packet"]),
   quantity: z.number().min(0.01, "Quantity must be greater than 0"),
   weight: z.number().min(0).optional(),
+  price: z.number().min(0).optional(),
   consumptionDate: z.string().min(1, "Consumption date is required"),
   notes: z.string().optional(),
   sourceType: z.enum(["general_expense", "custom_item"]),
@@ -48,6 +49,7 @@ export function ItemConsumedForm({
       unit: "kg", 
       quantity: 0, 
       weight: 0,
+      price: 0,
       consumptionDate: new Date().toISOString().slice(0, 10),
       notes: "",
       sourceType: "general_expense",
@@ -64,6 +66,7 @@ export function ItemConsumedForm({
       setValue("unit", consumedItem.unit);
       setValue("quantity", consumedItem.quantity);
       setValue("weight", consumedItem.weight ?? 0);
+      setValue("price", consumedItem.price ?? 0);
       setValue("consumptionDate", consumedItem.consumptionDate);
       setValue("notes", consumedItem.notes ?? "");
       setValue("sourceType", consumedItem.sourceType);
@@ -81,6 +84,7 @@ export function ItemConsumedForm({
       setValue("unit", "kg");
       setValue("quantity", 0);
       setValue("weight", 0);
+      setValue("price", 0);
       setValue("consumptionDate", new Date().toISOString().slice(0, 10));
       setValue("notes", "");
       setValue("sourceType", "general_expense");
@@ -110,17 +114,19 @@ export function ItemConsumedForm({
       setValue("itemName", value);
       setCustomItemName("");
       
-      // Auto-set unit and find source ID
+      // Auto-set unit, price, and find source ID
       if (selectedSourceType === "general_expense") {
         const selectedExpense = generalExpenses.find(exp => exp.name === value);
         if (selectedExpense) {
           setValue("unit", selectedExpense.unit);
+          setValue("price", selectedExpense.price);
           setValue("sourceId", selectedExpense.id);
         }
       } else {
         const selectedCustomItem = customItems.find(item => item.name === value);
         if (selectedCustomItem) {
           setValue("unit", selectedCustomItem.unit);
+          setValue("price", 0); // Custom items don't have price
           setValue("sourceId", selectedCustomItem.id);
         }
       }
@@ -152,6 +158,7 @@ export function ItemConsumedForm({
           unit: "kg",
           quantity: 0,
           weight: 0,
+          price: 0,
           consumptionDate: new Date().toISOString().slice(0, 10),
           notes: "",
           sourceType: "general_expense",
@@ -345,23 +352,51 @@ export function ItemConsumedForm({
         </label>
       </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontWeight: "500", color: "#333" }}>Weight (kg) - Optional</span>
-        <input
-          type="number"
-          step={0.01}
-          min={0}
-          placeholder="0.00 kg (if applicable)"
-          {...register("weight", { valueAsNumber: true })}
-          style={{
-            padding: "10px 12px",
-            border: "1px solid #ddd",
-            borderRadius: "6px",
-            fontSize: "14px"
-          }}
-        />
-        {errors.weight && <span style={{ color: "#dc3545", fontSize: "12px" }}>{errors.weight.message}</span>}
-      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontWeight: "500", color: "#333" }}>Weight (kg) - Optional</span>
+          <input
+            type="number"
+            step={0.01}
+            min={0}
+            placeholder="0.00 kg (if applicable)"
+            {...register("weight", { valueAsNumber: true })}
+            style={{
+              padding: "10px 12px",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              fontSize: "14px"
+            }}
+          />
+          {errors.weight && <span style={{ color: "#dc3545", fontSize: "12px" }}>{errors.weight.message}</span>}
+        </label>
+
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={{ fontWeight: "500", color: "#333" }}>Price per Unit - Auto-populated</span>
+          <input
+            type="number"
+            step={0.01}
+            min={0}
+            placeholder="0.00"
+            {...register("price", { valueAsNumber: true })}
+            style={{
+              padding: "10px 12px",
+              border: selectedItemName && selectedItemName !== "custom" ? "2px solid #28a745" : "1px solid #ddd",
+              borderRadius: "6px",
+              fontSize: "14px",
+              backgroundColor: selectedItemName && selectedItemName !== "custom" ? "#f8fff9" : "white",
+              fontWeight: selectedItemName && selectedItemName !== "custom" ? "500" : "normal"
+            }}
+            readOnly={selectedItemName && selectedItemName !== "custom"}
+          />
+          {errors.price && <span style={{ color: "#dc3545", fontSize: "12px" }}>{errors.price.message}</span>}
+          {selectedItemName && selectedItemName !== "custom" && !errors.price && (
+            <span style={{ color: "#28a745", fontSize: "12px" }}>
+              💰 Auto-populated from selected item
+            </span>
+          )}
+        </label>
+      </div>
 
       <label style={{ display: "grid", gap: 6 }}>
         <span style={{ fontWeight: "500", color: "#333" }}>Notes - Optional</span>

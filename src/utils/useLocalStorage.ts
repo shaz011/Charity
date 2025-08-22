@@ -139,8 +139,13 @@ export function useLocalStorage() {
     // Load custom products (no migration needed for new feature)
     const migratedCustomProducts = storedCustomProducts as CustomProduct[];
     
-    // Load consumed items (no migration needed for new feature)
-    const migratedConsumedItems = storedConsumedItems as ItemConsumed[];
+    // Load consumed items and migrate to include price field
+    const migratedConsumedItems = storedConsumedItems.map(item => {
+      if (!('price' in item)) {
+        return { ...item, price: 0 };
+      }
+      return item;
+    }) as ItemConsumed[];
     
     console.log(`useLocalStorage [${hookId}]: Migrated products:`, migratedProducts);
     console.log(`useLocalStorage [${hookId}]: Migrated sales:`, migratedSales);

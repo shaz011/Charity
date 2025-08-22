@@ -57,6 +57,10 @@ export function ItemConsumedPage({
   const todayConsumption = consumedItems.filter(item => item.consumptionDate === today);
   const totalItemsToday = todayConsumption.length;
   const totalQuantityToday = todayConsumption.reduce((sum, item) => sum + item.quantity, 0);
+  const totalCostToday = todayConsumption.reduce((sum, item) => {
+    const itemCost = (item.price || 0) * item.quantity;
+    return sum + itemCost;
+  }, 0);
 
   return (
     <div style={{ padding: 16 }}>
@@ -96,7 +100,7 @@ export function ItemConsumedPage({
       {/* Today's Summary */}
       <div style={{ 
         display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", 
         gap: 16, 
         marginBottom: 24 
       }}>
@@ -166,6 +170,22 @@ export function ItemConsumedPage({
           </div>
           <div style={{ fontSize: "18px" }}>
             {consumedItems.length} records
+          </div>
+        </div>
+
+        <div style={{
+          background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+          color: "white",
+          padding: "20px",
+          borderRadius: "12px",
+          textAlign: "center",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "8px" }}>
+            💰 Today's Cost
+          </div>
+          <div style={{ fontSize: "18px" }}>
+            ${totalCostToday.toFixed(2)}
           </div>
         </div>
       </div>
@@ -244,10 +264,13 @@ export function ItemConsumedPage({
             • <strong>Select Source:</strong> Choose between General Expenses or Custom Items as the source
           </p>
           <p style={{ margin: "0 0 8px 0" }}>
-            • <strong>Auto-population:</strong> Selecting an item automatically sets the unit and source ID
+            • <strong>Auto-population:</strong> Selecting an item automatically sets the unit, price, and source ID
           </p>
           <p style={{ margin: "0 0 8px 0" }}>
             • <strong>Track Usage:</strong> Monitor daily consumption patterns and inventory usage
+          </p>
+          <p style={{ margin: "0 0 8px 0" }}>
+            • <strong>Cost Tracking:</strong> View item prices and calculate daily consumption costs
           </p>
         </div>
       </div>
