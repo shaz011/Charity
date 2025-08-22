@@ -307,9 +307,9 @@ INSERT INTO products (name, unit, sale_price, quantity, buying_date) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Sample sales data (optional)
-INSERT INTO sales (product_id, weight, price_per_kg, expected_cash, received_cash, sale_date, topup, charity, credit, arrears) VALUES
-    ((SELECT id FROM products WHERE name = 'Rice' LIMIT 1), 10.0, 3.00, 30.00, 25.00, CURRENT_DATE, 0, 2.00, 1.00, 4.00),
-    ((SELECT id FROM products WHERE name = 'Chickpeas' LIMIT 1), 5.0, 3.75, 18.75, 18.75, CURRENT_DATE, 0, 0.00, 0.00, 0.00)
+INSERT INTO sales (product_id, weight_before_sale, weight_after_sale, weight, price_per_kg, expected_cash, received_cash, sale_date, topup, charity, credit, arrears) VALUES
+    ((SELECT id FROM products WHERE name = 'Rice' LIMIT 1), 15.0, 5.0, 10.0, 3.00, 30.00, 25.00, CURRENT_DATE, 0, 2.00, 1.00, 4.00),
+    ((SELECT id FROM products WHERE name = 'Chickpeas' LIMIT 1), 8.0, 3.0, 5.0, 3.75, 18.75, 18.75, CURRENT_DATE, 0, 0.00, 0.00, 0.00)
 ON CONFLICT DO NOTHING;
 
 -- Sample custom items data
