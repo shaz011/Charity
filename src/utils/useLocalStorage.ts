@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Product, ProductInput, Sale, SaleInput, GeneralExpense, GeneralExpenseInput, MiscExpense, MiscExpenseInput, CustomItem, CustomItemInput, CustomProduct, CustomProductInput, ItemConsumed, ItemConsumedInput } from './types';
+import { Product, ProductInput, Sale, SaleInput, GeneralExpense, GeneralExpenseInput, MiscExpense, MiscExpenseInput, CustomItem, CustomItemInput, CustomProduct, CustomProductInput, ItemConsumed, ItemConsumedInput, BankTransaction, BankTransactionInput, FamilyPayment, FamilyPaymentInput, FamilyMember, FamilyMemberInput } from './types';
 
 const PRODUCTS_STORAGE_KEY = 'charity.products.v4';
 const SALES_STORAGE_KEY = 'charity.sales.v2';
@@ -8,6 +8,9 @@ const MISC_EXPENSES_STORAGE_KEY = 'charity.misc_expenses.v1';
 const CUSTOM_ITEMS_STORAGE_KEY = 'charity.custom_items.v1';
 const CUSTOM_PRODUCTS_STORAGE_KEY = 'charity.custom_products.v1';
 const CONSUMED_ITEMS_STORAGE_KEY = 'charity.consumed_items.v1';
+const BANK_TRANSACTIONS_STORAGE_KEY = 'charity.bank_transactions.v1';
+const FAMILY_PAYMENTS_STORAGE_KEY = 'charity.family_payments.v1';
+const FAMILY_MEMBERS_STORAGE_KEY = 'charity.family_members.v1';
 
 // Helper functions for localStorage
 const readFromStorage = <T>(key: string, defaultValue: T): T => {
@@ -55,6 +58,9 @@ export function useLocalStorage() {
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [consumedItems, setConsumedItems] = useState<ItemConsumed[]>([]);
+  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
+  const [familyPayments, setFamilyPayments] = useState<FamilyPayment[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false); // Track if we've already initialized
@@ -85,6 +91,9 @@ export function useLocalStorage() {
     const storedCustomItems = readFromStorage<any[]>(CUSTOM_ITEMS_STORAGE_KEY, []);
     const storedCustomProducts = readFromStorage<any[]>(CUSTOM_PRODUCTS_STORAGE_KEY, []);
     const storedConsumedItems = readFromStorage<any[]>(CONSUMED_ITEMS_STORAGE_KEY, []);
+    const storedBankTransactions = readFromStorage<any[]>(BANK_TRANSACTIONS_STORAGE_KEY, []);
+    const storedFamilyPayments = readFromStorage<any[]>(FAMILY_PAYMENTS_STORAGE_KEY, []);
+    const storedFamilyMembers = readFromStorage<any[]>(FAMILY_MEMBERS_STORAGE_KEY, []);
     
     console.log(`useLocalStorage [${hookId}]: Raw stored products:`, storedProducts);
     console.log(`useLocalStorage [${hookId}]: Raw stored sales:`, storedSales);
@@ -92,6 +101,9 @@ export function useLocalStorage() {
     console.log(`useLocalStorage [${hookId}]: Raw stored misc expenses:`, storedMiscExpenses);
     console.log(`useLocalStorage [${hookId}]: Raw stored custom items:`, storedCustomItems);
     console.log(`useLocalStorage [${hookId}]: Raw stored consumed items:`, storedConsumedItems);
+    console.log(`useLocalStorage [${hookId}]: Raw stored bank transactions:`, storedBankTransactions);
+    console.log(`useLocalStorage [${hookId}]: Raw stored family payments:`, storedFamilyPayments);
+    console.log(`useLocalStorage [${hookId}]: Raw stored family members:`, storedFamilyMembers);
     
     // Migrate existing products to include salePrice field
     const migratedProducts = storedProducts.map(product => {
@@ -146,6 +158,20 @@ export function useLocalStorage() {
       }
       return item;
     }) as ItemConsumed[];
+
+    // Load bank transactions and migrate to include amount field
+    const migratedBankTransactions = storedBankTransactions.map(transaction => {
+      if (!('amount' in transaction)) {
+        return { ...transaction, amount: 0 };
+      }
+      return transaction;
+    }) as BankTransaction[];
+    
+    // Load family payments (no migration needed for new feature)
+    const migratedFamilyPayments = storedFamilyPayments as FamilyPayment[];
+    
+    // Load family members (no migration needed for new feature)
+    const migratedFamilyMembers = storedFamilyMembers as FamilyMember[];
     
     console.log(`useLocalStorage [${hookId}]: Migrated products:`, migratedProducts);
     console.log(`useLocalStorage [${hookId}]: Migrated sales:`, migratedSales);
@@ -154,6 +180,9 @@ export function useLocalStorage() {
     console.log(`useLocalStorage [${hookId}]: Migrated custom items:`, migratedCustomItems);
     console.log(`useLocalStorage [${hookId}]: Migrated custom products:`, migratedCustomProducts);
     console.log(`useLocalStorage [${hookId}]: Migrated consumed items:`, migratedConsumedItems);
+    console.log(`useLocalStorage [${hookId}]: Migrated bank transactions:`, migratedBankTransactions);
+    console.log(`useLocalStorage [${hookId}]: Migrated family payments:`, migratedFamilyPayments);
+    console.log(`useLocalStorage [${hookId}]: Migrated family members:`, migratedFamilyMembers);
     console.log(`useLocalStorage [${hookId}]: Setting products state to:`, migratedProducts);
     console.log(`useLocalStorage [${hookId}]: Setting sales state to:`, migratedSales);
     console.log(`useLocalStorage [${hookId}]: Setting expenses state to:`, migratedExpenses);
@@ -161,6 +190,9 @@ export function useLocalStorage() {
     console.log(`useLocalStorage [${hookId}]: Setting custom items state to:`, migratedCustomItems);
     console.log(`useLocalStorage [${hookId}]: Setting custom products state to:`, migratedCustomProducts);
     console.log(`useLocalStorage [${hookId}]: Setting consumed items state to:`, migratedConsumedItems);
+    console.log(`useLocalStorage [${hookId}]: Setting bank transactions state to:`, migratedBankTransactions);
+    console.log(`useLocalStorage [${hookId}]: Setting family payments state to:`, migratedFamilyPayments);
+    console.log(`useLocalStorage [${hookId}]: Setting family members state to:`, migratedFamilyMembers);
     
     setProducts(migratedProducts);
     setSales(migratedSales);
@@ -169,6 +201,9 @@ export function useLocalStorage() {
     setCustomItems(migratedCustomItems);
     setCustomProducts(migratedCustomProducts);
     setConsumedItems(migratedConsumedItems);
+    setBankTransactions(migratedBankTransactions);
+    setFamilyPayments(migratedFamilyPayments);
+    setFamilyMembers(migratedFamilyMembers);
     setInitialized(true);
     
     console.log(`useLocalStorage [${hookId}]: Initialization complete`);
@@ -251,6 +286,39 @@ export function useLocalStorage() {
     console.log(`useLocalStorage [${hookId}]: Saving consumed items to localStorage:`, consumedItems);
     writeToStorage(CONSUMED_ITEMS_STORAGE_KEY, consumedItems);
   }, [consumedItems, initialized, hookId]);
+
+  // Save bank transactions to localStorage whenever they change
+  useEffect(() => {
+    if (!initialized) {
+      console.log(`useLocalStorage [${hookId}]: Skipping save - not yet initialized`);
+      return;
+    }
+    
+    console.log(`useLocalStorage [${hookId}]: Saving bank transactions to localStorage:`, bankTransactions);
+    writeToStorage(BANK_TRANSACTIONS_STORAGE_KEY, bankTransactions);
+  }, [bankTransactions, initialized, hookId]);
+
+  // Save family payments to localStorage whenever they change
+  useEffect(() => {
+    if (!initialized) {
+      console.log(`useLocalStorage [${hookId}]: Skipping save - not yet initialized`);
+      return;
+    }
+    
+    console.log(`useLocalStorage [${hookId}]: Saving family payments to localStorage:`, familyPayments);
+    writeToStorage(FAMILY_PAYMENTS_STORAGE_KEY, familyPayments);
+  }, [familyPayments, initialized, hookId]);
+
+  // Save family members to localStorage whenever they change
+  useEffect(() => {
+    if (!initialized) {
+      console.log(`useLocalStorage [${hookId}]: Skipping save - not yet initialized`);
+      return;
+    }
+    
+    console.log(`useLocalStorage [${hookId}]: Saving family members to localStorage:`, familyMembers);
+    writeToStorage(FAMILY_MEMBERS_STORAGE_KEY, familyMembers);
+  }, [familyMembers, initialized, hookId]);
 
   // Product operations
   const createProduct = useCallback(async (input: ProductInput): Promise<void> => {
@@ -573,6 +641,177 @@ export function useLocalStorage() {
     }
   }, []);
 
+  // Bank Transaction operations
+  const createBankTransaction = useCallback(async (input: BankTransactionInput): Promise<void> => {
+    try {
+      setError(null);
+      const now = new Date().toISOString();
+      
+      // Calculate running balance
+      const currentBalance = bankTransactions.reduce((balance, transaction) => {
+        if (transaction.type === 'cash_received') {
+          return balance + transaction.amount;
+        } else {
+          return balance - transaction.amount;
+        }
+      }, 0);
+      
+      const newBalance = input.type === 'cash_received' 
+        ? currentBalance + input.amount 
+        : currentBalance - input.amount;
+      
+      const newBankTransaction: BankTransaction = {
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+        createdAt: now,
+        updatedAt: now,
+        ...input,
+        runningBalance: newBalance,
+      };
+      setBankTransactions(prev => [newBankTransaction, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create bank transaction');
+      throw err;
+    }
+  }, [bankTransactions]);
+
+  const updateBankTransaction = useCallback(async (id: string, input: BankTransactionInput): Promise<void> => {
+    try {
+      setError(null);
+      setBankTransactions(prev => {
+        const updatedTransactions = prev.map(transaction =>
+          transaction.id === id
+            ? { ...transaction, ...input, updatedAt: new Date().toISOString() }
+            : transaction
+        );
+        
+        // Recalculate running balances for all transactions after the updated one
+        let runningBalance = 0;
+        return updatedTransactions.map(transaction => {
+          if (transaction.type === 'cash_received') {
+            runningBalance += transaction.amount;
+          } else {
+            runningBalance -= transaction.amount;
+          }
+          return { ...transaction, runningBalance };
+        });
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update bank transaction');
+      throw err;
+    }
+  }, []);
+
+  const deleteBankTransaction = useCallback(async (id: string): Promise<void> => {
+    try {
+      setError(null);
+      setBankTransactions(prev => {
+        const filteredTransactions = prev.filter(transaction => transaction.id !== id);
+        
+        // Recalculate running balances for all remaining transactions
+        let runningBalance = 0;
+        return filteredTransactions.map(transaction => {
+          if (transaction.type === 'cash_received') {
+            runningBalance += transaction.amount;
+          } else {
+            runningBalance -= transaction.amount;
+          }
+          return { ...transaction, runningBalance };
+        });
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete bank transaction');
+      throw err;
+    }
+  }, []);
+
+  // Family Payment operations
+  const createFamilyPayment = useCallback(async (input: FamilyPaymentInput): Promise<void> => {
+    try {
+      setError(null);
+      const now = new Date().toISOString();
+      const newFamilyPayment: FamilyPayment = {
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+        createdAt: now,
+        updatedAt: now,
+        ...input,
+      };
+      setFamilyPayments(prev => [newFamilyPayment, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create family payment');
+      throw err;
+    }
+  }, []);
+
+  const updateFamilyPayment = useCallback(async (id: string, input: FamilyPaymentInput): Promise<void> => {
+    try {
+      setError(null);
+      setFamilyPayments(prev =>
+        prev.map(payment =>
+          payment.id === id
+            ? { ...payment, ...input, updatedAt: new Date().toISOString() }
+            : payment
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update family payment');
+      throw err;
+    }
+  }, []);
+
+  const deleteFamilyPayment = useCallback(async (id: string): Promise<void> => {
+    try {
+      setError(null);
+      setFamilyPayments(prev => prev.filter(payment => payment.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete family payment');
+      throw err;
+    }
+  }, []);
+
+  // Family Member operations
+  const createFamilyMember = useCallback(async (input: FamilyMemberInput): Promise<void> => {
+    try {
+      setError(null);
+      const now = new Date().toISOString();
+      const newFamilyMember: FamilyMember = {
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+        createdAt: now,
+        updatedAt: now,
+        ...input,
+      };
+      setFamilyMembers(prev => [newFamilyMember, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create family member');
+      throw err;
+    }
+  }, []);
+
+  const updateFamilyMember = useCallback(async (id: string, input: FamilyMemberInput): Promise<void> => {
+    try {
+      setError(null);
+      setFamilyMembers(prev =>
+        prev.map(member =>
+          member.id === id
+            ? { ...member, ...input, updatedAt: new Date().toISOString() }
+            : member
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update family member');
+      throw err;
+    }
+  }, []);
+
+  const deleteFamilyMember = useCallback(async (id: string): Promise<void> => {
+    try {
+      setError(null);
+      setFamilyMembers(prev => prev.filter(member => member.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete family member');
+      throw err;
+    }
+  }, []);
+
   const loadData = useCallback(async (): Promise<void> => {
     // localStorage data is already loaded in useEffect
     // This is just for API compatibility
@@ -591,6 +830,9 @@ export function useLocalStorage() {
     customItems,
     customProducts,
     consumedItems,
+    bankTransactions,
+    familyPayments,
+    familyMembers,
     loading,
     error,
     
@@ -617,6 +859,15 @@ export function useLocalStorage() {
     createConsumedItem,
     updateConsumedItem,
     deleteConsumedItem,
+    createBankTransaction,
+    updateBankTransaction,
+    deleteBankTransaction,
+    createFamilyPayment,
+    updateFamilyPayment,
+    deleteFamilyPayment,
+    createFamilyMember,
+    updateFamilyMember,
+    deleteFamilyMember,
     clearError,
   };
 }

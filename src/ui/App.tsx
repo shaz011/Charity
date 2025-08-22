@@ -8,6 +8,8 @@ import { GeneralExpensesPage } from "./GeneralExpensesPage";
 import { MiscExpensesPage } from "./MiscExpensesPage";
 import { ItemConsumedPage } from "./ItemConsumedPage";
 import { SummaryPage } from "./SummaryPage";
+import { BankAccountPage } from "./BankAccountPage";
+import { FamilyPaymentsPage } from "./FamilyPaymentsPage";
 import { DatabaseStatus } from "./DatabaseStatus";
 import { useDataStore } from "../utils/useDataStore";
 import { Product, ProductInput, Sale, SaleInput, GeneralExpense, GeneralExpenseInput, MiscExpense, MiscExpenseInput, CustomProductInput, ItemConsumedInput } from "../utils/types";
@@ -32,6 +34,12 @@ function Layout(): JSX.Element {
           </Link>
           <Link to="/consumed-items" style={{ marginRight: 16, textDecoration: "none", color: "#2c5aa0" }}>
             Items Consumed
+          </Link>
+          <Link to="/bank-account" style={{ marginRight: 16, textDecoration: "none", color: "#2c5aa0" }}>
+            Bank Account
+          </Link>
+          <Link to="/family-payments" style={{ marginRight: 16, textDecoration: "none", color: "#2c5aa0" }}>
+            Family Payments
           </Link>
           <Link to="/summary" style={{ marginRight: 16, textDecoration: "none", color: "#2c5aa0" }}>
             Summary
@@ -345,6 +353,9 @@ function AppRouter(): JSX.Element {
     miscExpenses,
     customItems,
     consumedItems,
+    bankTransactions,
+    familyPayments,
+    familyMembers,
     createSale, 
     updateSale, 
     deleteSale, 
@@ -360,6 +371,15 @@ function AppRouter(): JSX.Element {
     createConsumedItem,
     updateConsumedItem,
     deleteConsumedItem,
+    createBankTransaction,
+    updateBankTransaction,
+    deleteBankTransaction,
+    createFamilyPayment,
+    updateFamilyPayment,
+    deleteFamilyPayment,
+    createFamilyMember,
+    updateFamilyMember,
+    deleteFamilyMember,
     loading, 
     error, 
     clearError 
@@ -402,6 +422,28 @@ function AppRouter(): JSX.Element {
             onCreateConsumedItem={createConsumedItem} 
             onUpdateConsumedItem={updateConsumedItem} 
             onDeleteConsumedItem={deleteConsumedItem} 
+          /> 
+        },
+        { 
+          path: "bank-account", 
+          element: <BankAccountPage 
+            bankTransactions={bankTransactions} 
+            onCreateTransaction={createBankTransaction} 
+            onUpdateTransaction={updateBankTransaction} 
+            onDeleteTransaction={deleteBankTransaction} 
+          /> 
+        },
+        { 
+          path: "family-payments", 
+          element: <FamilyPaymentsPage 
+            familyPayments={familyPayments}
+            familyMembers={familyMembers}
+            onCreatePayment={createFamilyPayment}
+            onUpdatePayment={updateFamilyPayment}
+            onDeletePayment={deleteFamilyPayment}
+            onCreateMember={createFamilyMember}
+            onUpdateMember={updateFamilyMember}
+            onDeleteMember={deleteFamilyMember}
           /> 
         },
         { 

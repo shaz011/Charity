@@ -96,6 +96,38 @@ Update `src/utils/database.ts` to use your local PostgreSQL connection instead o
 - `source_id`: Reference to the source expense or custom item
 - `created_at`, `updated_at`: Timestamps
 
+### Bank Transactions Table
+- `id`: Unique identifier (UUID)
+- `transaction_type`: Type of transaction (cash_received, cash_withdrawn)
+- `amount`: Amount of cash received or withdrawn
+- `description`: Description of the transaction
+- `transaction_date`: Date when transaction occurred
+- `running_balance`: Running balance after this transaction
+- `notes`: Optional notes about the transaction
+- `created_at`, `updated_at`: Timestamps
+
+### Family Members Table
+- `id`: Unique identifier (UUID)
+- `name`: Name of the family member
+- `relationship`: Relationship to the user
+- `monthly_amount`: Monthly support amount (optional)
+- `payment_day`: Day of month for payment (1-31, optional)
+- `is_active`: Whether the family member is currently active
+- `notes`: Optional notes about the family member
+- `created_at`, `updated_at`: Timestamps
+
+### Family Payments Table
+- `id`: Unique identifier (UUID)
+- `family_member_name`: Name of the family member receiving payment
+- `amount`: Amount of payment made
+- `payment_date`: Date when payment was made
+- `payment_type`: Type of payment (monthly_support, emergency, special_occasion, education, medical, other)
+- `description`: Description of the payment
+- `notes`: Optional notes about the payment
+- `is_recurring`: Whether this is a recurring monthly payment
+- `next_payment_due`: Date for next recurring payment (if applicable)
+- `created_at`, `updated_at`: Timestamps
+
 ## Features
 
 - **Automatic Timestamps**: `created_at` and `updated_at` are automatically managed
@@ -104,6 +136,11 @@ Update `src/utils/database.ts` to use your local PostgreSQL connection instead o
 - **Calculated Fields**: Arrears is automatically calculated
 - **Indexes**: Optimized for common queries
 - **Row Level Security**: Ready for production use
+- **Bank Account Management**: Track cash received, withdrawn, and running balance
+- **Family Support System**: Manage family members and monthly payments
+- **Payment Categorization**: Categorize payments by type (monthly support, emergency, medical, etc.)
+- **Recurring Payments**: Set up automatic recurring monthly payments
+- **Quick Payment Creation**: Fast payment creation from family member profiles
 
 ## Troubleshooting
 

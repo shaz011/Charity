@@ -113,5 +113,75 @@ export interface ItemConsumed extends ItemConsumedInput {
   updatedAt: string;
 }
 
+// Bank Account Transaction Types
+export interface BankTransactionInput {
+  type: "cash_received" | "cash_withdrawn";
+  amount: number;
+  transactionDate: string; // YYYY-MM-DD
+  description: string;
+  notes?: string; // Optional notes about the transaction
+  reference?: string; // Optional reference number or receipt number
+}
+
+export interface BankTransaction extends BankTransactionInput {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  runningBalance: number; // Running balance after this transaction
+}
+
+// Bank Account Summary
+export interface BankAccountSummary {
+  totalCashReceived: number;
+  totalCashWithdrawn: number;
+  currentBalance: number;
+  lastTransactionDate: string | null;
+  transactionCount: number;
+}
+
+// Family Payment Types
+export interface FamilyPaymentInput {
+  familyMemberName: string;
+  amount: number;
+  paymentDate: string; // YYYY-MM-DD
+  paymentType: "monthly_support" | "emergency" | "special_occasion" | "education" | "medical" | "other";
+  description: string;
+  notes?: string; // Optional notes about the payment
+  isRecurring: boolean; // Whether this is a regular monthly payment
+  nextPaymentDue?: string; // YYYY-MM-DD for recurring payments
+}
+
+export interface FamilyPayment extends FamilyPaymentInput {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Family Member for managing recurring payments
+export interface FamilyMemberInput {
+  name: string;
+  relationship: string; // e.g., "Mother", "Brother", "Sister", "Child"
+  monthlyAmount?: number; // Default monthly amount
+  paymentDay?: number; // Day of month for recurring payments (1-31)
+  isActive: boolean; // Whether payments are currently active
+  notes?: string;
+}
+
+export interface FamilyMember extends FamilyMemberInput {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Family Payment Summary
+export interface FamilyPaymentSummary {
+  totalPaidThisMonth: number;
+  totalPaidThisYear: number;
+  activeFamilyMembers: number;
+  upcomingPayments: number;
+  lastPaymentDate: string | null;
+  paymentCount: number;
+}
+
 
 

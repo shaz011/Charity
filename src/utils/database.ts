@@ -15,6 +15,7 @@ export const TABLES = {
   CUSTOM_ITEMS: 'custom_items',
   CUSTOM_PRODUCTS: 'custom_products',
   CONSUMED_ITEMS: 'consumed_items',
+  BANK_TRANSACTIONS: 'bank_transactions',
 } as const;
 
 // Database schema types
@@ -100,6 +101,28 @@ export interface DatabaseConsumedItem {
   source_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface DatabaseBankTransaction {
+  id: string;
+  type: "cash_received" | "cash_withdrawn";
+  amount: number;
+  transaction_date: string;
+  description: string;
+  notes: string | null;
+  reference: string | null;
+  running_balance: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatabaseBankTransactionInput {
+  type: "cash_received" | "cash_withdrawn";
+  amount: number;
+  transaction_date: string;
+  description: string;
+  notes: string | null;
+  reference: string | null;
 }
 
 // Database operations
@@ -448,6 +471,57 @@ export const db = {
   async deleteConsumedItem(id: string): Promise<void> {
     const { error } = await supabase
       .from(TABLES.CONSUMED_ITEMS)
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  // Bank Transactions
+  async getBankTransactions(): Promise<DatabaseBankTransaction[]> {
+    const { data, error } = await supabase
+      .from(TABLES.BANK_TRANSACTIONS)
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async createBankTransaction(transaction: DatabaseBankTransactionInput): Promise<DatabaseBankTransaction> {
+    const { data, error } = await supabase
+      .from(TABLES.BANK_TRANSACTIONS)
+      .insert([{
+        ...transaction,
+        running_balance: 0, // Will be calculated by database trigger or application logic
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async updateBankTransaction(id: string, updates: Partial<DatabaseBankTransactionInput>): Promise<DatabaseBankTransaction> {
+    const { data, error } = await supabase
+      .from(TABLES.BANK_TRANSACTIONS)
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteBankTransaction(id: string): Promise<void> {
+    const { error } = await supabase
+      .from(TABLES.BANK_TRANSACTIONS)
       .delete()
       .eq('id', id);
     

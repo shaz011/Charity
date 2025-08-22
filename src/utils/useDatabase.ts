@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db, DatabaseProduct, DatabaseSale, DatabaseExpense, DatabaseMiscExpense, DatabaseCustomItem, DatabaseCustomProduct, DatabaseConsumedItem } from './database';
-import { Product, ProductInput, Sale, SaleInput, GeneralExpense, GeneralExpenseInput, MiscExpense, MiscExpenseInput, CustomItem, CustomItemInput, CustomProduct, CustomProductInput, ItemConsumed, ItemConsumedInput } from './types';
+import { db, DatabaseProduct, DatabaseSale, DatabaseExpense, DatabaseMiscExpense, DatabaseCustomItem, DatabaseCustomProduct, DatabaseConsumedItem, DatabaseBankTransaction } from './database';
+import { Product, ProductInput, Sale, SaleInput, GeneralExpense, GeneralExpenseInput, MiscExpense, MiscExpenseInput, CustomItem, CustomItemInput, CustomProduct, CustomProductInput, ItemConsumed, ItemConsumedInput, BankTransaction, BankTransactionInput } from './types';
 
 // Convert database types to app types
 const mapDatabaseProduct = (dbProduct: DatabaseProduct): Product => ({
@@ -161,6 +161,31 @@ const mapToDatabaseCustomProduct = (customProduct: CustomProductInput): Omit<Dat
   unit: customProduct.unit,
 });
 
+// Convert database types to app types for bank transactions
+const mapDatabaseBankTransaction = (dbBankTransaction: DatabaseBankTransaction): BankTransaction => ({
+  id: dbBankTransaction.id,
+  type: dbBankTransaction.type,
+  amount: dbBankTransaction.amount,
+  transactionDate: dbBankTransaction.transaction_date,
+  description: dbBankTransaction.description,
+  notes: dbBankTransaction.notes || undefined,
+  reference: dbBankTransaction.reference || undefined,
+  runningBalance: dbBankTransaction.running_balance,
+  createdAt: dbBankTransaction.created_at,
+  updatedAt: dbBankTransaction.updated_at,
+});
+
+// Convert app types to database types for bank transactions
+const mapToDatabaseBankTransaction = (bankTransaction: BankTransactionInput): Omit<DatabaseBankTransaction, 'id' | 'created_at' | 'updated_at' | 'running_balance'> => ({
+  type: bankTransaction.type,
+  amount: bankTransaction.amount,
+  transaction_date: bankTransaction.transactionDate,
+  description: bankTransaction.description,
+  notes: bankTransaction.notes || null,
+  reference: bankTransaction.reference || null,
+
+});
+
 export function useDatabase() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -169,6 +194,7 @@ export function useDatabase() {
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [consumedItems, setConsumedItems] = useState<ItemConsumed[]>([]);
+  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -178,7 +204,7 @@ export function useDatabase() {
       setLoading(true);
       setError(null);
       
-      const [productsData, salesData, expensesData, miscExpensesData, customItemsData, customProductsData, consumedItemsData] = await Promise.all([
+      const [productsData, salesData, expensesData, miscExpensesData, customItemsData, customProductsData, consumedItemsData, bankTransactionsData] = await Promise.all([
         db.getProducts(),
         db.getSales(),
         db.getExpenses(),
@@ -186,6 +212,7 @@ export function useDatabase() {
         db.getCustomItems(),
         db.getCustomProducts(),
         db.getConsumedItems(),
+        db.getBankTransactions(),
       ]);
       
       setProducts(productsData.map(mapDatabaseProduct));
@@ -195,6 +222,7 @@ export function useDatabase() {
       setCustomItems(customItemsData.map(mapDatabaseCustomItem));
       setCustomProducts(customProductsData.map(mapDatabaseCustomProduct));
       setConsumedItems(consumedItemsData.map(mapDatabaseConsumedItem));
+      setBankTransactions(bankTransactionsData.map(mapDatabaseBankTransaction));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
       throw err;
@@ -463,6 +491,46 @@ export function useDatabase() {
     }
   }, []);
 
+  // Bank Transactions operations
+  const createBankTransaction = useCallback(async (input: BankTransactionInput): Promise<void> => {
+    try {
+      setError(null);
+      const dbBankTransaction = await db.createBankTransaction(mapToDatabaseBankTransaction(input));
+      const newBankTransaction = mapDatabaseBankTransaction(dbBankTransaction);
+      setBankTransactions(prev => [newBankTransaction, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create bank transaction');
+      throw err;
+    }
+  }, []);
+
+  const updateBankTransaction = useCallback(async (id: string, input: BankTransactionInput): Promise<void> => {
+    try {
+      setError(null);
+      const dbBankTransaction = await db.updateBankTransaction(id, mapToDatabaseBankTransaction(input));
+      const updatedBankTransaction = mapDatabaseBankTransaction(dbBankTransaction);
+      setBankTransactions(prev =>
+        prev.map(transaction =>
+          transaction.id === id ? updatedBankTransaction : transaction
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update bank transaction');
+      throw err;
+    }
+  }, []);
+
+  const deleteBankTransaction = useCallback(async (id: string): Promise<void> => {
+    try {
+      setError(null);
+      await db.deleteBankTransaction(id);
+      setBankTransactions(prev => prev.filter(transaction => transaction.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete bank transaction');
+      throw err;
+    }
+  }, []);
+
   return {
     // Data
     products,
@@ -472,6 +540,7 @@ export function useDatabase() {
     customItems,
     customProducts,
     consumedItems,
+    bankTransactions,
     loading,
     error,
     
@@ -498,6 +567,9 @@ export function useDatabase() {
     createConsumedItem,
     updateConsumedItem,
     deleteConsumedItem,
+    createBankTransaction,
+    updateBankTransaction,
+    deleteBankTransaction,
     clearError: () => setError(null),
   };
 }

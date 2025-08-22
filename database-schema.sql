@@ -79,6 +79,63 @@ CREATE TABLE IF NOT EXISTS misc_expenses (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Item Consumption table - for tracking what items are consumed daily
+CREATE TABLE IF NOT EXISTS consumed_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_name VARCHAR(100) NOT NULL, -- Name of the item consumed
+    unit VARCHAR(20) NOT NULL CHECK (unit IN ('kg', 'pack', 'piece', 'liter', 'dozen', 'gram', 'bottle', 'packet')),
+    quantity DECIMAL(10,2) NOT NULL CHECK (quantity > 0), -- Quantity consumed
+    weight DECIMAL(10,2) CHECK (weight >= 0), -- Optional weight in kg if applicable
+    price DECIMAL(10,2) CHECK (price >= 0), -- Price per unit from the source item
+    consumption_date DATE NOT NULL, -- Date when item was consumed
+    notes TEXT, -- Optional notes about consumption
+    source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('general_expense', 'custom_item')), -- Where the item came from
+    source_id UUID, -- ID of the source expense or custom item
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Bank Transactions table - for tracking cash received, withdrawn, and balance
+CREATE TABLE IF NOT EXISTS bank_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('cash_received', 'cash_withdrawn')),
+    amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+    description TEXT NOT NULL,
+    transaction_date DATE NOT NULL,
+    running_balance DECIMAL(10,2) NOT NULL, -- Calculated running balance after this transaction
+    notes TEXT, -- Optional notes about the transaction
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Family Members table - for managing family member information
+CREATE TABLE IF NOT EXISTS family_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    relationship VARCHAR(100) NOT NULL,
+    monthly_amount DECIMAL(10,2) CHECK (monthly_amount >= 0), -- Monthly support amount
+    payment_day INTEGER CHECK (payment_day >= 1 AND payment_day <= 31), -- Day of month for payment
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    notes TEXT, -- Optional notes about the family member
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Family Payments table - for recording payments to family members
+CREATE TABLE IF NOT EXISTS family_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    family_member_name VARCHAR(100) NOT NULL, -- Name of the family member
+    amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+    payment_date DATE NOT NULL,
+    payment_type VARCHAR(50) NOT NULL CHECK (payment_type IN ('monthly_support', 'emergency', 'special_occasion', 'education', 'medical', 'other')),
+    description TEXT NOT NULL,
+    notes TEXT, -- Optional notes about the payment
+    is_recurring BOOLEAN NOT NULL DEFAULT false,
+    next_payment_due DATE, -- Date for next recurring payment
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
 CREATE INDEX IF NOT EXISTS idx_products_buying_date ON products(buying_date);
@@ -100,27 +157,27 @@ CREATE INDEX IF NOT EXISTS idx_misc_expenses_name ON misc_expenses(name);
 CREATE INDEX IF NOT EXISTS idx_misc_expenses_expense_date ON misc_expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_misc_expenses_created_at ON misc_expenses(created_at);
 
--- Item Consumption table - for tracking what items are consumed daily
-CREATE TABLE IF NOT EXISTS consumed_items (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_name VARCHAR(100) NOT NULL, -- Name of the item consumed
-    unit VARCHAR(20) NOT NULL CHECK (unit IN ('kg', 'pack', 'piece', 'liter', 'dozen', 'gram', 'bottle', 'packet')),
-    quantity DECIMAL(10,2) NOT NULL CHECK (quantity > 0), -- Quantity consumed
-    weight DECIMAL(10,2) CHECK (weight >= 0), -- Optional weight in kg if applicable
-    price DECIMAL(10,2) CHECK (price >= 0), -- Price per unit from the source item
-    consumption_date DATE NOT NULL, -- Date when item was consumed
-    notes TEXT, -- Optional notes about consumption
-    source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('general_expense', 'custom_item')), -- Where the item came from
-    source_id UUID, -- ID of the source expense or custom item
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Indexes for consumed_items table
 CREATE INDEX IF NOT EXISTS idx_consumed_items_item_name ON consumed_items(item_name);
 CREATE INDEX IF NOT EXISTS idx_consumed_items_consumption_date ON consumed_items(consumption_date);
 CREATE INDEX IF NOT EXISTS idx_consumed_items_source_type ON consumed_items(source_type);
 CREATE INDEX IF NOT EXISTS idx_consumed_items_created_at ON consumed_items(created_at);
+
+-- Indexes for bank_transactions table
+CREATE INDEX IF NOT EXISTS idx_bank_transactions_transaction_type ON bank_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_bank_transactions_transaction_date ON bank_transactions(transaction_date);
+CREATE INDEX IF NOT EXISTS idx_bank_transactions_created_at ON bank_transactions(created_at);
+
+-- Indexes for family_members table
+CREATE INDEX IF NOT EXISTS idx_family_members_name ON family_members(name);
+CREATE INDEX IF NOT EXISTS idx_family_members_is_active ON family_members(is_active);
+CREATE INDEX IF NOT EXISTS idx_family_members_created_at ON family_members(created_at);
+
+-- Indexes for family_payments table
+CREATE INDEX IF NOT EXISTS idx_family_payments_family_member_name ON family_payments(family_member_name);
+CREATE INDEX IF NOT EXISTS idx_family_payments_payment_date ON family_payments(payment_date);
+CREATE INDEX IF NOT EXISTS idx_family_payments_payment_type ON family_payments(payment_type);
+CREATE INDEX IF NOT EXISTS idx_family_payments_created_at ON family_payments(created_at);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -182,6 +239,62 @@ CREATE TRIGGER update_misc_expenses_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_misc_expenses_updated_at();
 
+-- Triggers for consumed_items table
+CREATE OR REPLACE FUNCTION update_consumed_items_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_consumed_items_updated_at
+    BEFORE UPDATE ON consumed_items
+    FOR EACH ROW
+    EXECUTE FUNCTION update_consumed_items_updated_at();
+
+-- Triggers for bank_transactions table
+CREATE OR REPLACE FUNCTION update_bank_transactions_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_bank_transactions_updated_at
+    BEFORE UPDATE ON bank_transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_bank_transactions_updated_at();
+
+-- Triggers for family_members table
+CREATE OR REPLACE FUNCTION update_family_members_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_family_members_updated_at
+    BEFORE UPDATE ON family_members
+    FOR EACH ROW
+    EXECUTE FUNCTION update_family_members_updated_at();
+
+-- Triggers for family_payments table
+CREATE OR REPLACE FUNCTION update_family_payments_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_family_payments_updated_at
+    BEFORE UPDATE ON family_payments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_family_payments_updated_at();
+
 -- Row Level Security (RLS) - Enable for production
 -- ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
@@ -224,6 +337,27 @@ INSERT INTO misc_expenses (name, price, quantity, expense_date, notes) VALUES
     ('Maintenance', 25.00, 1, CURRENT_DATE, 'Equipment repair costs')
 ON CONFLICT DO NOTHING;
 
+-- Sample bank transaction data (optional)
+INSERT INTO bank_transactions (transaction_type, amount, description, transaction_date, running_balance, notes) VALUES
+    ('cash_received', 1000.00, 'Initial deposit', CURRENT_DATE, 1000.00, 'Starting balance'),
+    ('cash_withdrawn', 250.00, 'Monthly expenses', CURRENT_DATE, 750.00, 'For household expenses'),
+    ('cash_received', 500.00, 'Charity donation', CURRENT_DATE, 1250.00, 'Donation received')
+ON CONFLICT DO NOTHING;
+
+-- Sample family members data (optional)
+INSERT INTO family_members (name, relationship, monthly_amount, payment_day, is_active, notes) VALUES
+    ('Sarah', 'Mother', 300.00, 1, true, 'Monthly living expenses'),
+    ('John', 'Brother', 200.00, 15, true, 'Education support'),
+    ('Mary', 'Sister', 150.00, 20, true, 'Medical expenses support')
+ON CONFLICT DO NOTHING;
+
+-- Sample family payments data (optional)
+INSERT INTO family_payments (family_member_name, amount, payment_date, payment_type, description, notes, is_recurring, next_payment_due) VALUES
+    ('Sarah', 300.00, CURRENT_DATE, 'monthly_support', 'Monthly living expenses', 'Regular monthly support', true, (CURRENT_DATE + INTERVAL '1 month')::date),
+    ('John', 200.00, CURRENT_DATE, 'education', 'School fees support', 'Education support payment', true, (CURRENT_DATE + INTERVAL '1 month')::date),
+    ('Mary', 150.00, CURRENT_DATE, 'medical', 'Medical bills support', 'Medical expenses support', false, NULL)
+ON CONFLICT DO NOTHING;
+
 -- Comments
 COMMENT ON TABLE products IS 'Stores product inventory information';
 COMMENT ON TABLE sales IS 'Stores sales transactions';
@@ -257,3 +391,32 @@ COMMENT ON COLUMN expenses.expense_date IS 'Date when expense was incurred';
 COMMENT ON COLUMN expenses.notes IS 'Optional notes about the expense';
 COMMENT ON COLUMN expenses.created_at IS 'Timestamp when expense was recorded';
 COMMENT ON COLUMN expenses.updated_at IS 'Timestamp when expense was last updated';
+
+-- Comments for bank_transactions table
+COMMENT ON TABLE bank_transactions IS 'Stores bank account transactions (cash received/withdrawn)';
+COMMENT ON COLUMN bank_transactions.transaction_type IS 'Type of transaction: cash_received or cash_withdrawn';
+COMMENT ON COLUMN bank_transactions.amount IS 'Amount of cash received or withdrawn';
+COMMENT ON COLUMN bank_transactions.description IS 'Description of the transaction';
+COMMENT ON COLUMN bank_transactions.transaction_date IS 'Date when transaction occurred';
+COMMENT ON COLUMN bank_transactions.running_balance IS 'Running balance after this transaction';
+COMMENT ON COLUMN bank_transactions.notes IS 'Optional notes about the transaction';
+
+-- Comments for family_members table
+COMMENT ON TABLE family_members IS 'Stores information about family members receiving support';
+COMMENT ON COLUMN family_members.name IS 'Name of the family member';
+COMMENT ON COLUMN family_members.relationship IS 'Relationship to the user';
+COMMENT ON COLUMN family_members.monthly_amount IS 'Monthly support amount (optional)';
+COMMENT ON COLUMN family_members.payment_day IS 'Day of month for payment (1-31, optional)';
+COMMENT ON COLUMN family_members.is_active IS 'Whether the family member is currently active';
+COMMENT ON COLUMN family_members.notes IS 'Optional notes about the family member';
+
+-- Comments for family_payments table
+COMMENT ON TABLE family_payments IS 'Stores payments made to family members';
+COMMENT ON COLUMN family_payments.family_member_name IS 'Name of the family member receiving payment';
+COMMENT ON COLUMN family_payments.amount IS 'Amount of payment made';
+COMMENT ON COLUMN family_payments.payment_date IS 'Date when payment was made';
+COMMENT ON COLUMN family_payments.payment_type IS 'Type of payment (monthly_support, emergency, etc.)';
+COMMENT ON COLUMN family_payments.description IS 'Description of the payment';
+COMMENT ON COLUMN family_payments.notes IS 'Optional notes about the payment';
+COMMENT ON COLUMN family_payments.is_recurring IS 'Whether this is a recurring monthly payment';
+COMMENT ON COLUMN family_payments.next_payment_due IS 'Date for next recurring payment (if applicable)';
